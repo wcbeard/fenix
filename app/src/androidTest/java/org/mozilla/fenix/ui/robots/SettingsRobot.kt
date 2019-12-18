@@ -19,6 +19,7 @@ import androidx.test.espresso.matcher.ViewMatchers
 import androidx.test.espresso.matcher.ViewMatchers.Visibility
 import androidx.test.espresso.matcher.ViewMatchers.isCompletelyDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withEffectiveVisibility
+import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
@@ -52,7 +53,7 @@ class SettingsRobot {
     fun verifyEnhancedTrackingProtectionValue(state: String) =
         assertEnhancedTrackingProtectionValue(state)
 
-    fun verifyAddPrivateBrowsingShortcutButton() = assertPrivateBrowsingButton()
+    fun verifyPrivateBrowsingButton() = assertPrivateBrowsingButton()
     fun verifySitePermissionsButton() = assertSitePermissionsButton()
     fun verifyDeleteBrowsingDataButton() = assertDeleteBrowsingDataButton()
     fun verifyDeleteBrowsingDataOnQuitButton() = assertDeleteBrowsingDataOnQuitButton()
@@ -153,6 +154,15 @@ class SettingsRobot {
 
             SettingsTurnOnSyncRobot().interact()
             return SettingsTurnOnSyncRobot.Transition()
+        }
+
+        fun openPrivateBrowsingSubMenu(interact: SettingsSubMenuPrivateBrowsingRobot.() -> Unit): SettingsSubMenuPrivateBrowsingRobot.Transition {
+            TestHelper.scrollToElementByText("Private browsing")
+            fun privateBrowsingButton() = onView(withText("Private browsing"))
+            privateBrowsingButton().click()
+
+            SettingsSubMenuPrivateBrowsingRobot().interact()
+            return SettingsSubMenuPrivateBrowsingRobot.Transition()
         }
     }
 }

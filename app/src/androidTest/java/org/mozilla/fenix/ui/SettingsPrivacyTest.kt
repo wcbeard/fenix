@@ -16,6 +16,9 @@ import org.mozilla.fenix.helpers.AndroidAssetDispatcher
 import org.mozilla.fenix.helpers.HomeActivityTestRule
 import org.mozilla.fenix.helpers.TestAssetHelper
 import org.mozilla.fenix.helpers.TestHelper
+import org.mozilla.fenix.helpers.TestHelper.restartApp
+import org.mozilla.fenix.ui.robots.addToHomeScreen
+import org.mozilla.fenix.ui.robots.browserScreen
 import org.mozilla.fenix.ui.robots.homeScreen
 import org.mozilla.fenix.ui.robots.navigationToolbar
 
@@ -29,6 +32,7 @@ class SettingsPrivacyTest {
 
     private val mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
     private lateinit var mockWebServer: MockWebServer
+    private val pageShortcutName = "TestShortcut"
 
     @get:Rule
     val activityTestRule = HomeActivityTestRule()
@@ -100,7 +104,7 @@ class SettingsPrivacyTest {
             // Logins
             verifyLoginsButton()
             // drill down to submenu
-            verifyAddPrivateBrowsingShortcutButton()
+            verifyPrivateBrowsingButton()
             verifySitePermissionsButton()
             // drill down on search
             verifyDeleteBrowsingDataButton()
@@ -191,6 +195,98 @@ class SettingsPrivacyTest {
         }.openLoginsAndPasswordSubMenu {
         }.saveLoginsAndPasswordsOptions {
             verifySaveLoginsOptionsView()
+        }
+    }
+
+    @Test
+    fun verifyPrivateBrowsingMenuItemsTest() {
+        homeScreen {
+        }.openThreeDotMenu {
+        }.openSettings {
+        }.openPrivateBrowsingSubMenu {
+            verifyAddPrivateBrowsingShortcutButton()
+            verifyOpenLinksInPrivateTab()
+            verifyOpenLinksInPrivateTabOff()
+        }.goBack {
+            verifySettingsView()
+        }
+    }
+
+    @Test
+    fun openExternalLinksInPrivateTest() {
+        setOpenLinksInPrivateOn()
+
+        TestHelper.openAppFromExternalLink("https://google.com")
+
+        browserScreen {
+        }.openHomeScreen {
+            verifyPrivateSessionHeader()
+        }
+
+        setOpenLinksInPrivateOff()
+
+        TestHelper.openAppFromExternalLink("https://google.com")
+
+        browserScreen {
+        }.openHomeScreen {
+            verifyOpenTabsHeader()
+        }
+    }
+
+    @Test
+    fun launchPageShortcutInPrivateModeTest() {
+        val defaultWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
+
+        setOpenLinksInPrivateOn()
+
+        addToHomeScreen {
+            addHomeScreenShortcut(defaultWebPage.url, pageShortcutName)
+        }.openHomeScreenShortcut(pageShortcutName) {
+        }.openHomeScreen {
+            verifyPrivateSessionHeader()
+        }
+    }
+
+    @Test
+    fun launchLinksInPrivateToggleOffStateDoesntChangeTest() {
+        val defaultWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
+
+        setOpenLinksInPrivateOn()
+
+        addToHomeScreen {
+            addHomeScreenShortcut(defaultWebPage.url, pageShortcutName)
+        }.openHomeScreenShortcut(pageShortcutName) {
+        }.openHomeScreen { }
+
+        setOpenLinksInPrivateOff()
+
+        restartApp(activityTestRule)
+
+        addToHomeScreen {
+        }.goToHomeScreenOpenShortcut(pageShortcutName) {
+        }.openHomeScreen {
+            verifyOpenTabsHeader()
+        }.openThreeDotMenu {
+        }.openSettings {
+        }.openPrivateBrowsingSubMenu {
+            verifyOpenLinksInPrivateTabOff()
+        }
+
+    }
+
+    @Test
+    fun addPrivateBrowsingShortcut() {
+        homeScreen {
+        }.openThreeDotMenu {
+        }.openSettings {
+        }.openPrivateBrowsingSubMenu {
+            addPrivateShortcutToHomescreen()
+            verifyPrivateBrowsingShortcutIcon()
+        }.openPrivateBrowsingShortcut {
+            verifySearchView()
+        }.openBrowser {
+        }.openHomeScreen {
+            verifyPrivateSessionHeader()
         }
     }
 
@@ -364,4 +460,28 @@ class SettingsPrivacyTest {
         // Click on Leak Canary toggle
         // Verify 'dump' message
     }
+}
+
+private fun setOpenLinksInPrivateOn() {
+
+    homeScreen {
+    }.openThreeDotMenu {
+    }.openSettings {
+    }.openPrivateBrowsingSubMenu {
+        verifyOpenLinksInPrivateTabEnabled()
+        clickOpenLinksInPrivateTabSwitch()
+    }.goBack {
+    }.goBack {
+    }
+}
+
+private fun setOpenLinksInPrivateOff() {
+    homeScreen {
+    }.openThreeDotMenu {
+    }.openSettings {
+    }.openPrivateBrowsingSubMenu {
+        clickOpenLinksInPrivateTabSwitch()
+        verifyOpenLinksInPrivateTabOff()
+    }.goBack {
+    }.goBack {}
 }
